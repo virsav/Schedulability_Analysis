@@ -29,12 +29,15 @@ typedef struct
 //Array of structures to store each Task from file
 taskInfo *alltasks;
 
+//Array for response time analysis
+taskInfo *respTime;
+
 int num_tasksets, total_tasks;
 
 //Array to store number of Tasks in each set
 int *set_sizes;
 
-//Using map to store all time instants in ascending order, Key-time, value-wcet
+//Using map to store all time instants in ascending order, Key-time, value-wcet for loading factor
 map<float, float> loadFactor;
 
 FILE *fout;
@@ -89,7 +92,7 @@ int find_alltasks_iter(int setno)
 /* Function to compute the density function and get the utilisation value for n tasks */
 float utilisation_check(int setno, int numtasks)
 {
-	float utilisation;
+	float utilisation = 0;
 
 	int iter = find_alltasks_iter(setno);
 
@@ -102,13 +105,18 @@ float utilisation_check(int setno, int numtasks)
 }
 
 /* Function to verify if any tasks fails utilisation bound of n*(2^(1/n)-1) */
-bool RM_DM_util_check(int setno, int numtasks)
+bool RM_DM_util_check(int numtasks)
 {
 	float bound, utilisation, exponent;
+
 	//printf("N=%d\n", numtasks);
 	for(int n=0; n<numtasks; n++)
 	{
-		utilisation = utilisation_check(setno, (n+1));
+		utilisation = 0;
+		for(int i=0; i<(n+1); i++)
+		{
+			utilisation += ((float)respTime[i].wcet / (float)(min(respTime[i].deadline, respTime[i].period)));
+		}
 		exponent = (1/((float)(n+1)));
 		bound = (pow(2,exponent)-1);
 		bound = ((n+1)*(bound));
@@ -156,7 +164,7 @@ uint32_t compute_load(uint32_t l0, uint32_t numtasks, uint32_t iter)
 uint32_t compute_sync_period(int setno)
 {
 	int numtasks = set_sizes[setno];
-	float first_load;
+	float first_load = 0;
 	uint32_t l0, l1;
 	int iter = find_alltasks_iter(setno);
 	for(int i=0; i<numtasks; i++)
@@ -228,43 +236,44 @@ uint32_t check_loading_factor(int setno, int sync_period)
 }
 
 /* Function to compute single response time except first variable Summation of wcet*ceil(a(i-1)/period) */
-uint32_t compute_response(uint32_t a0, uint32_t taskno, uint32_t iter)
+uint32_t compute_response(uint32_t a0, uint32_t taskno)
 {
 	uint32_t a1 = 0;
 
 	for(uint32_t i=0; i<(taskno-1); i++)
 	{
-		float ceil_value;
-		ceil_value = ((float)a0)/((float)alltasks[iter+i].period);
-		a1 += ((alltasks[iter+i].wcet)*(ceil(ceil_value)));
+		float ceil_value = 0;
+		ceil_value = ((float)a0)/((float)(min(respTime[i].deadline, respTime[i].period)));
+		a1 += ((respTime[i].wcet)*(ceil(ceil_value)));
 	}
 
 	return a1;
 }
 
 /* Function to compute response time iterations */
-uint32_t compute_response_time(int setno, int taskno, int iter)
+uint32_t compute_response_time(int taskno)
 {
 	float first_resp;
 	uint32_t a0, a1;
+	first_resp = 0;
 	for(int i=0; i<taskno; i++)
 	{
-		first_resp += alltasks[iter+i].wcet;
+		first_resp += respTime[i].wcet;
 	}
 	a0 = first_resp;
-	a1 = alltasks[iter+taskno-1].wcet + compute_response(a0, taskno, iter);
+	a1 = respTime[taskno-1].wcet + compute_response(a0, taskno);
 
 	while(1)
 	{
 		//If Two consecutive response time same or response time exceeds deadline
-		if((a0 != a1)&&(a1 < alltasks[iter+taskno-1].deadline))
+		if((a0 != a1)&&(a1 < respTime[taskno-1].deadline))
 		{
 			a0 = a1;
-			a1 = alltasks[iter+taskno-1].wcet + compute_response(a0, taskno, iter);
+			a1 = respTime[taskno-1].wcet + compute_response(a0, taskno);
 		}
 		else
 		{
-			fprintf(fout, "Task %d failed utilisation bound, WCRT = %d, Period = %f\n",taskno-1, a1, alltasks[iter+taskno-1].period);
+			fprintf(fout, "Task %d failed utilisation bound, WCRT = %d, Period = %f\n",taskno-1, a1, respTime[taskno-1].period);
 			break;
 		}
 	}
@@ -277,14 +286,14 @@ uint32_t compute_response_time(int setno, int taskno, int iter)
 void response_time_analysis(int setno)
 {
 	int numtasks = set_sizes[setno];
-	int iter = find_alltasks_iter(setno);
 	uint32_t resp_time;
+
 	for(int i=0; i<numtasks; i++)
 	{
-		if(!RM_DM_util_check(setno, i+1))
+		if(!RM_DM_util_check(i+1))
 		{
-			resp_time = compute_response_time(setno, i+1, iter);
-			if(resp_time <= alltasks[iter+i].deadline)
+			resp_time = compute_response_time(i+1);
+			if(resp_time <= respTime[i].deadline)
 			{
 				fprintf(fout, "Taskset %d task %d, response_time %d schedulable\n", setno, i, resp_time);
 			}
@@ -360,11 +369,35 @@ void RM_DM_analysis()
 		float utilisation = utilisation_check(i, set_sizes[i]);
 		fprintf(fout, "\n~~~~~~~~~~~~~ Taskset %d ~~~~~~~~~~~~~\n", i);
 		fprintf(fout, "Utilisation= %f\n", utilisation);
+
+		loadFactor.clear();
+		int iter = find_alltasks_iter(i);
+		int numtasks = set_sizes[i];
+
+		//Populate map for all tasks
+		for(int i=0; i<numtasks; i++)
+		{
+			float time = alltasks[iter+i].deadline;
+
+			loadFactor.insert( pair<float, float>(time, iter+i) );
+		}
+
+		respTime = (taskInfo *)realloc(respTime, numtasks * sizeof(taskInfo));
+
+		int j = 0;
+		for (auto& it : loadFactor) {
+			respTime[j].set_no = i;
+			respTime[j].wcet = alltasks[(int)(it.second)].wcet;
+			respTime[j].deadline = alltasks[(int)(it.second)].deadline;
+			respTime[j].period = alltasks[(int)(it.second)].period;
+			j++;
+	    }
+
 		if(utilisation <= 1)
 		{
 			if(deadline_EQcheck(i, set_sizes[i])){
 				fprintf(fout, "Taskset %d Utilisation <= 1 and Deadline = Period, performing RM\n", i);
-				if(RM_DM_util_check(i, set_sizes[i]))
+				if(RM_DM_util_check(set_sizes[i]))
 				{
 					fprintf(fout, "Taskset %d schedulable using RM \nSince Utilisation Bound analysis Passed\n", i);
 				}
@@ -378,7 +411,7 @@ void RM_DM_analysis()
 			else
 			{
 				fprintf(fout, "Taskset %d Utilisation <= 1 and Deadline < Period, performing DM\n", i);
-				if(RM_DM_util_check(i, set_sizes[i]))
+				if(RM_DM_util_check(set_sizes[i]))
 				{
 					fprintf(fout, "Taskset %d schedulable using DM \nSince Utilisation Bound analysis Passed\n", i);
 				}
@@ -430,6 +463,8 @@ int main(int argc, char** argv)
    	getTasksets(fptr);
 
    	fclose(fptr);
+
+   	respTime = (taskInfo *)malloc(total_tasks * sizeof(taskInfo));
 
    	fout = fopen(fileOut,"w");
 

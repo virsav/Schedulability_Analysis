@@ -1,0 +1,134 @@
+================ CSE 522:RTES - Assignment 4 Output Report ================
+
+**************** Input Tasksets ****************
+
+Taskset 0 Task 0: WCET = 5.000000, Deadline = 12.000000, Period = 12.000000
+Taskset 0 Task 1: WCET = 15.000000, Deadline = 54.000000, Period = 54.000000
+Taskset 0 Task 2: WCET = 18.000000, Deadline = 72.000000, Period = 72.000000
+Taskset 1 Task 0: WCET = 5.000000, Deadline = 12.000000, Period = 12.000000
+Taskset 1 Task 1: WCET = 10.000000, Deadline = 54.000000, Period = 54.000000
+Taskset 1 Task 2: WCET = 18.000000, Deadline = 40.000000, Period = 72.000000
+Taskset 2 Task 0: WCET = 5.000000, Deadline = 30.000000, Period = 30.000000
+Taskset 2 Task 1: WCET = 6.000000, Deadline = 40.000000, Period = 40.000000
+Taskset 2 Task 2: WCET = 12.000000, Deadline = 72.000000, Period = 72.000000
+Taskset 2 Task 3: WCET = 32.000000, Deadline = 156.000000, Period = 156.000000
+Taskset 2 Task 4: WCET = 24.000000, Deadline = 240.000000, Period = 240.000000
+Taskset 2 Task 5: WCET = 45.000000, Deadline = 320.000000, Period = 320.000000
+Taskset 2 Task 6: WCET = 40.000000, Deadline = 768.000000, Period = 768.000000
+Taskset 3 Task 0: WCET = 5.000000, Deadline = 30.000000, Period = 30.000000
+Taskset 3 Task 1: WCET = 6.000000, Deadline = 36.000000, Period = 40.000000
+Taskset 3 Task 2: WCET = 12.000000, Deadline = 72.000000, Period = 72.000000
+Taskset 3 Task 3: WCET = 30.000000, Deadline = 60.000000, Period = 156.000000
+Taskset 3 Task 4: WCET = 24.000000, Deadline = 240.000000, Period = 240.000000
+Taskset 3 Task 5: WCET = 45.000000, Deadline = 180.000000, Period = 320.000000
+Taskset 3 Task 6: WCET = 40.000000, Deadline = 768.000000, Period = 768.000000
+Taskset 4 Task 0: WCET = 2.000000, Deadline = 4.000000, Period = 6.000000
+Taskset 4 Task 1: WCET = 2.000000, Deadline = 5.000000, Period = 8.000000
+Taskset 4 Task 2: WCET = 3.000000, Deadline = 7.000000, Period = 9.000000
+Taskset 5 Task 0: WCET = 40.000000, Deadline = 100.000000, Period = 100.000000
+Taskset 5 Task 1: WCET = 40.000000, Deadline = 150.000000, Period = 150.000000
+Taskset 5 Task 2: WCET = 100.000000, Deadline = 350.000000, Period = 350.000000
+Taskset 6 Task 0: WCET = 6.000000, Deadline = 16.000000, Period = 20.000000
+Taskset 6 Task 1: WCET = 8.000000, Deadline = 22.000000, Period = 25.000000
+Taskset 6 Task 2: WCET = 4.000000, Deadline = 28.000000, Period = 32.000000
+Taskset 6 Task 3: WCET = 6.000000, Deadline = 24.000000, Period = 28.000000
+
+
+**************** Ouput Analysis ****************
+
+
+---------------- EDF Analysis ----------------
+
+~~~~~~~~~~~~~ Taskset 0 ~~~~~~~~~~~~~
+Utilisation= 0.944444
+Taskset 0 schedulable using EDF, 
+since utilisation <= 1 
+
+~~~~~~~~~~~~~ Taskset 1 ~~~~~~~~~~~~~
+Utilisation= 1.051852
+Taskset 1 Deadline < Period, Utilisation > 1 
+Taskset 1 need to do using Loading factor analysis
+Taskset 1 Sync Busy period is 48
+Taskset 1 No deadline missed, schedulable!
+
+~~~~~~~~~~~~~ Taskset 2 ~~~~~~~~~~~~~
+Utilisation= 0.981170
+Taskset 2 schedulable using EDF, 
+since utilisation <= 1 
+
+~~~~~~~~~~~~~ Taskset 3 ~~~~~~~~~~~~~
+Utilisation= 1.402083
+Taskset 3 Deadline < Period, Utilisation > 1 
+Taskset 3 need to do using Loading factor analysis
+Taskset 3 Sync Busy period is 1508
+Taskset 3 First deadline missed at 240, Not schedulable!
+
+~~~~~~~~~~~~~ Taskset 4 ~~~~~~~~~~~~~
+Utilisation= 1.328571
+Taskset 4 Deadline < Period, Utilisation > 1 
+Taskset 4 need to do using Loading factor analysis
+Taskset 4 Sync Busy period is 16
+Taskset 4 No deadline missed, schedulable!
+
+~~~~~~~~~~~~~ Taskset 5 ~~~~~~~~~~~~~
+Utilisation= 0.952381
+Taskset 5 schedulable using EDF, 
+since utilisation <= 1 
+
+~~~~~~~~~~~~~ Taskset 6 ~~~~~~~~~~~~~
+Utilisation= 1.131494
+Taskset 6 Deadline < Period, Utilisation > 1 
+Taskset 6 need to do using Loading factor analysis
+Taskset 6 Sync Busy period is 140
+Taskset 6 No deadline missed, schedulable!
+
+
+---------------- RM/DM Analysis ----------------
+
+~~~~~~~~~~~~~ Taskset 0 ~~~~~~~~~~~~~
+Utilisation= 0.944444
+Taskset 0 Utilisation <= 1 and Deadline = Period, performing RM
+Taskset 0 Utilisation Bound analysis not satisfied
+Taskset 0 need to do using Response time analysis for RM
+Task 2 failed utilisation bound, WCRT = 73, Period = 72.000000
+Taskset 0 task 2 response time NOT schedulable
+
+~~~~~~~~~~~~~ Taskset 1 ~~~~~~~~~~~~~
+Utilisation= 1.051852
+Taskset 1 utilisation > 1 -- RM / DM FAIL!
+
+~~~~~~~~~~~~~ Taskset 2 ~~~~~~~~~~~~~
+Utilisation= 0.981170
+Taskset 2 Utilisation <= 1 and Deadline = Period, performing RM
+Taskset 2 Utilisation Bound analysis not satisfied
+Taskset 2 need to do using Response time analysis for RM
+Task 4 failed utilisation bound, WCRT = 118, Period = 240.000000
+Taskset 2 task 4, response_time 118 schedulable
+Task 5 failed utilisation bound, WCRT = 352, Period = 320.000000
+Taskset 2 task 5 response time NOT schedulable
+Task 6 failed utilisation bound, WCRT = 802, Period = 768.000000
+Taskset 2 task 6 response time NOT schedulable
+
+~~~~~~~~~~~~~ Taskset 3 ~~~~~~~~~~~~~
+Utilisation= 1.402083
+Taskset 3 utilisation > 1 -- RM / DM FAIL!
+
+~~~~~~~~~~~~~ Taskset 4 ~~~~~~~~~~~~~
+Utilisation= 1.328571
+Taskset 4 utilisation > 1 -- RM / DM FAIL!
+
+~~~~~~~~~~~~~ Taskset 5 ~~~~~~~~~~~~~
+Utilisation= 0.952381
+Taskset 5 Utilisation <= 1 and Deadline = Period, performing RM
+Taskset 5 Utilisation Bound analysis not satisfied
+Taskset 5 need to do using Response time analysis for RM
+Task 2 failed utilisation bound, WCRT = 300, Period = 350.000000
+Taskset 5 task 2, response_time 300 schedulable
+
+~~~~~~~~~~~~~ Taskset 6 ~~~~~~~~~~~~~
+Utilisation= 1.131494
+Taskset 6 utilisation > 1 -- RM / DM FAIL!
+
+
+================ END OF REPORT ================
+
